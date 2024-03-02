@@ -1,4 +1,4 @@
-package cj.demo.model;
+package cj.demo.models;
 
 import lombok.Builder;
 import lombok.Getter;

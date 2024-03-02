@@ -1,16 +1,19 @@
-package cj.demo.service.impl;
+package cj.demo.services.impl;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import cj.demo.bo.EmployeeBO;
-import cj.demo.mapper.EmployeeMapper;
-import cj.demo.model.Employee;
-import cj.demo.repository.ProviderSpreadSheetRepository;
+import cj.demo.exceptions.EmployeeException;
+import cj.demo.mappers.EmployeeMapper;
+import cj.demo.models.Employee;
+import cj.demo.repositories.ProviderSpreadSheetRepository;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -65,19 +68,18 @@ class ProviderSpreadsheetProcessorServiceImplTest {
                 .monthlyAmount(10F)
                 .build());
 
-        when(repository.getEmployees()).thenReturn(employeeList);
+        when(repository.getEmployees(anyInt())).thenReturn(employeeList);
         when(employeeMapper.toBOList(anyList())).thenReturn(employeeBOList);
 
-        assertAll(() -> assertEquals(30F, underTest.sumEmployeesMonthlyAmounts()),
-            () -> verify(repository, atLeastOnce()).getEmployees(),
+        assertAll(() -> assertEquals(30F, underTest.sumEmployeesMonthlyAmounts(0)),
+            () -> verify(repository, atLeastOnce()).getEmployees(anyInt()),
             () -> verify(employeeMapper, atLeastOnce()).toBOList(anyList()));
     }
 
     @Test
-    void test_sumEmployeesMonthlyAmounts_() {
+    void test_sumEmployeesMonthlyAmounts_name_empty() {
         List<Employee> employeeList = List.of(
             Employee.builder()
-                .name("test Employee 1")
                 .id(1L)
                 .statusActive(Boolean.TRUE)
                 .monthlyAmount(10F)
@@ -95,31 +97,38 @@ class ProviderSpreadsheetProcessorServiceImplTest {
                 .monthlyAmount(10F)
                 .build());
 
-        List<EmployeeBO> employeeBOList = List.of(
-            EmployeeBO.builder()
+        when(repository.getEmployees(anyInt())).thenReturn(employeeList);
+
+        assertAll(
+            () -> assertThrows(EmployeeException.class, () -> underTest.sumEmployeesMonthlyAmounts(1)),
+            () -> verify(repository, atLeastOnce()).getEmployees(anyInt()));
+    }
+    @Test
+    void test_sumEmployeesMonthlyAmounts_0_amount() {
+        List<Employee> employeeList = List.of(
+            Employee.builder()
                 .id(1L)
-                .name("test Employee 1")
                 .statusActive(Boolean.TRUE)
-                .monthlyAmount(10F)
+                .monthlyAmount(0F)
                 .build(),
-            EmployeeBO.builder()
+            Employee.builder()
                 .id(2L)
                 .name("test Employee 2")
                 .statusActive(Boolean.TRUE)
                 .monthlyAmount(20F)
                 .build(),
-            EmployeeBO.builder()
+            Employee.builder()
                 .id(3L)
                 .name("test Employee 3")
                 .statusActive(Boolean.FALSE)
                 .monthlyAmount(10F)
                 .build());
 
-        when(repository.getEmployees()).thenReturn(employeeList);
-        when(employeeMapper.toBOList(anyList())).thenReturn(employeeBOList);
 
-        assertAll(() -> assertEquals(30F, underTest.sumEmployeesMonthlyAmounts()),
-            () -> verify(repository, atLeastOnce()).getEmployees(),
-            () -> verify(employeeMapper, atLeastOnce()).toBOList(anyList()));
+        when(repository.getEmployees(anyInt())).thenReturn(employeeList);
+
+        assertAll(
+            () -> assertThrows(EmployeeException.class, () -> underTest.sumEmployeesMonthlyAmounts(1)),
+            () -> verify(repository, atLeastOnce()).getEmployees(anyInt()));
     }
 }
